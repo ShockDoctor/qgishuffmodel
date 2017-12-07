@@ -5,12 +5,12 @@
 ##Centre_Layer=vector
 ##Centre_Layer_ID_Field=field Centre_Layer
 ##Centre_Layer_Attractiveness_Field=field Centre_Layer
-##Huff_Exponent_Value=selection 1; 2; 3
+##Huff_Exponent_Value=number 1
 ##Output_Layer=output file
 
 # Script: RyersonGEo - Huff Model
 # Author: Michael Morrish
-# Date: January 13, 2017
+# Date: December 7, 2017
 #
 # This script takes in two input shapefiles, three field specifications, and
 # one numeric value to produce Huff model probabilities.
@@ -29,13 +29,7 @@ fldConsumerID_index = lyrConsumer.fieldNameIndex(Consumer_Layer_ID_Field)
 fldCentreID_index = lyrCentre.fieldNameIndex(Centre_Layer_ID_Field)
 fldCentreAttract_index = lyrCentre.fieldNameIndex(Centre_Layer_Attractiveness_Field)
 
-# Use dropdown list index to specify the Huff model exponent.
-if Huff_Exponent_Value == 0:
-    expHuff = 1
-elif Huff_Exponent_Value == 1:
-    expHuff = 2
-elif Huff_Exponent_Value == 2:
-    expHuff = 3
+# Specify Huff model exponent. Default is set at 1. 
 
 # Need to prepare output layer and add new field.
 # New field is "Hi" plus the ID of the Centre.
