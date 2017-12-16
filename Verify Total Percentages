@@ -1,5 +1,8 @@
 from PyQt4.QtCore import QVariant
 
+"""This script will automate the process of ensuring that the probabilites for each mall add up to 100%
+A shapefile will need to be first loaded into QGIS. This script cannot be used from the processing toolbox yet"""
+
 # Makes changes to the current active layer
 huff_model = iface.activeLayer()
 # Checks that the current layer is valid
