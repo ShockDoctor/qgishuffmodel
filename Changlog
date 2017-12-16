@@ -1,0 +1,8 @@
+December 16th, 2017 
+
+-added new script: Verify_Percentages
+
+Issues
+
+-Changing list to a dictionary to show I.D of each feature that does not total 100% 
+-Deleting all unnecessary attributes (no value)
