@@ -25,8 +25,9 @@ HiSC1005 + HiSC1006 + HiSC1007 + HiSC1008 + \
 HiSC1009 + HiSC1010 + HiSC1011 + HiSC1012 + HiSC1013")
 expression.prepare(huff_model.pendingFields())
 
-# Update new field with probabilities 
-incorrect_prob = []
+incorrect_prob = [] # Will determine if any incorrect probabilites exist
+
+# Update new field with probabilities.
 for feature in huff_model.getFeatures():
     value = expression.evaluate(feature)
     if feature[index] > 0.99999:
