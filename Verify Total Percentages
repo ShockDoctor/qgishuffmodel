@@ -24,7 +24,6 @@ expression.prepare(huff_model.pendingFields())
 # Update new field with probabilities 
 for field in huff_model.getFeatures():
     field[index] = expression.evaluate(field)
-    print field[index]
     if field[index] > .99999:
         huff_model.updateFeature(field)
     else:
