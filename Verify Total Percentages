@@ -17,23 +17,24 @@ index = huff_model.fieldNameIndex('Check')
 
 # Create the equation to check the probabilities
 expression = QgsExpression(
-"HiSC1001 + HiSC1002 + HiSC1003 + HiSC1004 + HiSC1005 + HiSC1006 +
-HiSC1007 + HiSC1008 + HiSC1009 + HiSC1010 + HiSC1011 + HiSC1012 + HiSC1013")
+"HiSC1001 + HiSC1002 + HiSC1003 + HiSC1004 + \
+HiSC1005 + HiSC1006 + HiSC1007 + HiSC1008 + \
+HiSC1009 + HiSC1010 + HiSC1011 + HiSC1012 + HiSC1013")
 expression.prepare(huff_model.pendingFields())
 
 # Update new field with probabilities 
-for field in huff_model.getFeatures():
-    field[index] = expression.evaluate(field)
-    if field[index] > .99999:
-        huff_model.updateFeature(field)
+incorrect_prob = []
+for feature in huff_model.getFeatures():
+    value = expression.evaluate(feature)
+    if feature[index] > 0.99999:
+        huff_model.changeAttributeValue(feature.id(), index, value)
     else:
-        huff_model.updateFeature(field)
-        incorrect_prob.append(field) # Add value of field to list if less than 1.0(100%) total probability
+        huff_model.changeAttributeValue(feature.id(), index, value)
+        incorrect_prob.append(feature) # Add value of field to list if less than 1.0(100%) total probability
 
 huff_model.commitChanges()
 
 # Check to see if there are any features with less than 1.0(100%) total probability 
-incorrect_prob = []
 if len(incorrect_prob) != 0:
     print("There are {} incorrect total probabilities.".format(len(incorrect_prob)))
     print "Individual features need correction."
