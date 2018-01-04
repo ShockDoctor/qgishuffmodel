@@ -2,12 +2,14 @@
 
 ##Huff_Model_Layer=vector
 ##Mall=field Huff_Model_Layer
+##PDF_file=output file
 
 from qgis.core import *
 from qgis.gui import *
 from qgis.utils import *
 from PyQt4.QtCore import *
 from PyQt4.QtGui import *
+import os
 
 # Load the huff model layer
 ori_huff_model = processing.getObject(Huff_Model_Layer)
@@ -15,8 +17,6 @@ ori_huff_model = processing.getObject(Huff_Model_Layer)
 mall = ori_huff_model.fieldNameIndex(Mall)
 
 # Make a copy of the huff model layer to work with so that all changes made to copy only keeping original data intact
-ori_huff_model = QgsVectorLayer("C:/Users/Oski/Py_internship/Huff_Model_Oski/Data/HuffEDExp1TorCMAxSC13FlSp.shp", "polygon", "ogr")
-
 huff_model = QgsVectorLayer("Polygon?crs=epsg:4326", "Huff_Model", "memory")
 huff_model_data = huff_model.dataProvider()
 
@@ -151,6 +151,10 @@ table.setComposerMap(composerMap)
 table.setVectorLayer(huff_model)
 table.setMaximumNumberOfFeatures(huff_model.featureCount())
 c.addItem(table)
+
+# Checks for the existence of the file with the same name and removes it.
+if os.path.isfile(PDF_file):
+    os.remove(PDF_file)
 
 printer = QPrinter()
 printer.setOutputFormat(QPrinter.PdfFormat)
