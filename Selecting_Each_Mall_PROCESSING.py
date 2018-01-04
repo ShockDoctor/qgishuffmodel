@@ -3,7 +3,7 @@
 ##Huff_Model_Layer=vector
 ##Mall=field Huff_Model_Layer
 ##Census_Layer=vector
-##Layer_Name= string name of mall
+##Mall_Layer_Name= string name of mall
 ##PDF_file=output file pdf
 
 from qgis.core import *
@@ -21,7 +21,7 @@ census_layer = processing.getObject(Census_Layer)
 mall = ori_huff_model.fieldNameIndex(Mall)
 
 # Make a copy of the huff model layer to work with so that all changes made to copy only keeping original data intact
-huff_model = QgsVectorLayer("Polygon?crs=epsg:4326", Layer_Name, "memory")
+huff_model = QgsVectorLayer("Polygon?crs=epsg:4326", Mall_Layer_Name, "memory")
 huff_model_data = huff_model.dataProvider()
 
 huff_model.startEditing()
@@ -102,8 +102,8 @@ root = QgsProject.instance().layerTreeRoot()
 child1 = root.children()[1]
 if child1.name() == census_layer.name():
     child2 = root.children()[0]
-    child2.setLayerName(Layer_Name)
-    target__lyr = QgsMapLayerRegistry.instance().mapLayersByName(Layer_Name)[0]
+    child2.setLayerName(Mall_Layer_Name)
+    target__lyr = QgsMapLayerRegistry.instance().mapLayersByName(Mall_Layer_Name)[0]
     the_layer = root.findLayer(target__lyr.id())
     root.removeChildNode(the_layer)
 
@@ -113,7 +113,7 @@ reg.addMapLayer(huff_model)
 
 # Join the census layer to the newly created layer to show specific demographic data. Currently the full table is
 # joined but specific columns can be chose if an entire table join is unnecessary.
-targetLyr = QgsMapLayerRegistry.instance().mapLayersByName(Layer_Name)[0]
+targetLyr = QgsMapLayerRegistry.instance().mapLayersByName(Mall_Layer_Name)[0]
 censusLyr = QgsMapLayerRegistry.instance().mapLayersByName(census_layer.name())[0]
 
 mycensusLyr = root.findLayer(censusLyr.id())
