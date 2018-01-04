@@ -2,7 +2,9 @@
 
 ##Huff_Model_Layer=vector
 ##Mall=field Huff_Model_Layer
-##PDF_file=output file
+##Census_Layer=vector
+##Layer_Name= string name of mall
+##PDF_file=output file pdf
 
 from qgis.core import *
 from qgis.gui import *
@@ -13,11 +15,13 @@ import os
 
 # Load the huff model layer
 ori_huff_model = processing.getObject(Huff_Model_Layer)
+# Load the census layer
+census_layer = processing.getObject(Census_Layer)
 # Choose the mall to find the primary and secondary market areas
 mall = ori_huff_model.fieldNameIndex(Mall)
 
 # Make a copy of the huff model layer to work with so that all changes made to copy only keeping original data intact
-huff_model = QgsVectorLayer("Polygon?crs=epsg:4326", "Huff_Model", "memory")
+huff_model = QgsVectorLayer("Polygon?crs=epsg:4326", Layer_Name, "memory")
 huff_model_data = huff_model.dataProvider()
 
 huff_model.startEditing()
@@ -34,21 +38,21 @@ for elem in ori_huff_model.getFeatures():
     huff_model.updateExtents()
 
 # Checks that the current layer is valid
-if huff_model.isValid():
-    print "Model is valid."
-else:
-    print "Invalid Model."
+#if huff_model.isValid():
+    #print "Model is valid."
+#else:
+    #print "Invalid Model."
 
 for field in huff_model.fields():
     field_id = huff_model.fieldNameIndex(field.name())
-    print ">>> Field name: {} Field ID: {}".format(field.name(), field_id)
+    #print ">>> Field name: {} Field ID: {}".format(field.name(), field_id)
     if mall == field.name():
         mall = huff_model.fieldNameIndex(field.name())
-        print "<<< mall ID: {}".format(mall)
+        #print "<<< mall ID: {}".format(mall)
         break
 
 col_num = int(mall)
-print col_num
+#print col_num
 
 # Create two new fields that will only show the primary and secondary market areas based on selected probabilities
 primary = QgsField('Primary', QVariant.Double)
@@ -67,11 +71,11 @@ for feature in huff_model.getFeatures():
     else:
         # Primary market values will go into this column
         if probability[col_num] >= .6:
-            print("Primary market area: {} ({})".format(ctuid, probability[col_num]))
+            #print("Primary market area: {} ({})".format(ctuid, probability[col_num]))
             huff_model.changeAttributeValue(feature.id(), index_pri, probability[col_num])
         # Secondary market values will go into this column
         if .4 <= probability[col_num] < .6:
-            print("Secondary market area: {} ({})".format(ctuid, probability[col_num]))
+            #print("Secondary market area: {} ({})".format(ctuid, probability[col_num]))
             huff_model.changeAttributeValue(feature.id(), index_sec, probability[col_num])
 
 # Delete all other columns except for the CTUID, Primary, Secondary columns
@@ -81,7 +85,7 @@ fieldnames = {'CTUID', 'Primary', 'Secondary'}
 for field in huff_model.fields():
     if field.name() not in fieldnames:
         fields.append(huff_model.fieldNameIndex(field.name()))
-        print(fields.append(huff_model.fieldNameIndex(field.name())))
+        #print(fields.append(huff_model.fieldNameIndex(field.name())))
 
 huff_model.deleteAttributes(fields)
 
@@ -92,15 +96,16 @@ for f in huff_model.getFeatures(QgsFeatureRequest(expr)):
 
 huff_model.commitChanges()
 
+root = QgsProject.instance().layerTreeRoot()
+
 # Making sure that only one copy layer exists at a time, if running the script multiple times with different malls
-layers = QgsMapLayerRegistry.instance().mapLayers()
-for name, layer in layers.iteritems():
-    if layer.name() == "Huff_Model":
-        print "It exists"
-        if "Huff_Model" in name:
-            QgsMapLayerRegistry.instance().removeMapLayer(layer)
-    else:
-        print "Does not exist"
+child1 = root.children()[1]
+if child1.name() == census_layer.name():
+    child2 = root.children()[0]
+    child2.setLayerName(Layer_Name)
+    target__lyr = QgsMapLayerRegistry.instance().mapLayersByName(Layer_Name)[0]
+    the_layer = root.findLayer(target__lyr.id())
+    root.removeChildNode(the_layer)
 
 # Add newly formatted layer to map
 reg = QgsMapLayerRegistry.instance()
@@ -108,16 +113,8 @@ reg.addMapLayer(huff_model)
 
 # Join the census layer to the newly created layer to show specific demographic data. Currently the full table is
 # joined but specific columns can be chose if an entire table join is unnecessary.
-targetLyr = QgsMapLayerRegistry.instance().mapLayersByName("Huff_Model")[0]
-censusLyr = QgsMapLayerRegistry.instance().mapLayersByName("TorontoCMA_2006census_region")[0]
-
-root = QgsProject.instance().layerTreeRoot()
-
-mytargetLyr = root.findLayer(targetLyr.id())
-targetClone = mytargetLyr.clone()
-parent = mytargetLyr.parent()
-parent.insertChildNode(0, targetClone)
-parent.removeChildNode(mytargetLyr)
+targetLyr = QgsMapLayerRegistry.instance().mapLayersByName(Layer_Name)[0]
+censusLyr = QgsMapLayerRegistry.instance().mapLayersByName(census_layer.name())[0]
 
 mycensusLyr = root.findLayer(censusLyr.id())
 censusClone = mycensusLyr.clone()
