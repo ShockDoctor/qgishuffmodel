@@ -152,13 +152,13 @@ table.setVectorLayer(huff_model)
 table.setMaximumNumberOfFeatures(huff_model.featureCount())
 c.addItem(table)
 
-# Checks for the existence of the file with the same name and removes it.
+# Checks for the existence of a file with the same name and removes it.
 if os.path.isfile(PDF_file):
     os.remove(PDF_file)
 
 printer = QPrinter()
 printer.setOutputFormat(QPrinter.PdfFormat)
-printer.setOutputFileName("C:/Users/Oski/Py_internship/Huff_Model_Oski/Outputs/out.pdf")
+printer.setOutputFileName(PDF_file)
 printer.setPaperSize(QSizeF(c.paperWidth(), c.paperHeight()), QPrinter.Millimeter)
 printer.setFullPage(True)
 
