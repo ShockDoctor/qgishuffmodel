@@ -1,9 +1,9 @@
 ##RyersonGeo - Primary and Secondary Market Area=name
-
 ##Huff_Model_Layer=vector
 ##Mall=field Huff_Model_Layer
 ##Census_Layer=vector
 ##Population_Data=field Census_Layer
+##Other_Census_Data=multiple field Census_Layer
 ##Mall_Layer_Name= string test
 ##PDF_file=output file pdf
 
@@ -21,6 +21,7 @@ census_layer = processing.getObject(Census_Layer)
 
 root = QgsProject.instance().layerTreeRoot()
 
+# Remove old huff_model layer if script was run previously
 try:
     last_layer = QgsMapLayerRegistry.instance().mapLayersByName(Mall_Layer_Name)[0]
     QgsMapLayerRegistry.instance().removeMapLayers([last_layer])
@@ -49,12 +50,6 @@ for elem in ori_huff_model.getFeatures():
     feat.setAttributes(elem.attributes())
     huff_model.addFeatures([feat])
     huff_model.updateExtents()
-
-# Checks that the current layer is valid
-#if huff_model.isValid():
-    #print "Model is valid."
-#else:
-    #print "Invalid Model."
     
 # Choose the mall to find the primary and secondary market areas
 mall = ori_huff_model.fieldNameIndex(Mall)
@@ -101,7 +96,7 @@ for feature in huff_model.getFeatures():
             huff_model.changeAttributeValue(feature.id(), index_sec, probability[col_num])
 
 # Delete all other features (rows) that do not have a probability in the primary and the secondary column
-expr = QgsExpression("\"Primary\" is NULL and \"Secondary\" is NULL")
+expr = QgsExpression("Primary is NULL and Secondary is NULL")
 for f in huff_model.getFeatures(QgsFeatureRequest(expr)):
     huff_model.deleteFeature(f.id())
 
@@ -113,7 +108,7 @@ reg = QgsMapLayerRegistry.instance()
 reg.addMapLayer(huff_model)
 
 # Join the census layer to the newly created layer to show specific demographic data. 
-targetLyr = QgsMapLayerRegistry.instance().mapLayersByName(Mall_Layer_Name)[0]
+targetLyr = QgsMapLayerRegistry.instance().mapLayersByName (Mall_Layer_Name)[0]
 censusLyr = QgsMapLayerRegistry.instance().mapLayersByName(census_layer.name())[0]
 
 mycensusLyr = root.findLayer(censusLyr.id())
@@ -122,6 +117,18 @@ parent = mycensusLyr.parent()
 parent.insertChildNode(1, censusClone)
 parent.removeChildNode(mycensusLyr)
 
+# Ensuring the fields selected for the join are ordered in the same way they are shown in the census layer attribute table
+census_attr = set(Other_Census_Data.split(';'))
+if 'CTUID' in census_attr:
+    # Remove the field being joined from selected field list
+    census_attr.remove('CTUID')
+if Population_Data not in census_attr:
+    # Make sure population data is in the joined table to calculate new fields
+    census_attr.add(Population_Data)
+fields = census_layer.pendingFields()
+field_names = [field.name() for field in fields]
+final_census_attr = sorted(census_attr, key=lambda x: field_names.index(x))
+
 # Set properties for the join
 targetField = 'CTUID'
 inField = 'CTUID'
@@ -129,27 +136,23 @@ joinObject = QgsVectorJoinInfo()
 joinObject.joinLayerId = censusLyr.id()
 joinObject.joinFieldName = inField
 joinObject.targetFieldName = targetField
+joinObject.memoryCache = True
+joinObject.setJoinFieldNamesSubset(final_census_attr)
 joinObject.prefix = ''
 print(targetLyr.addJoin(joinObject))  # You should get True as response.
 targetLyr.addJoin(joinObject)
 
-ct_pop = Population_Data
-ct_pop = "{}\\".format(ct_pop)
-print ct_pop
-
 huff_model.startEditing()
 
-expression = QgsExpression("to_int(\"Primary\" * \"POP06\")")
+expression = QgsExpression("to_int(Primary * " + Population_Data+ ")")
 expression.prepare(huff_model.pendingFields())
-
 for feature in huff_model.getFeatures():
     value = expression.evaluate(feature)
     feature[idx_pri_pop] = value
     huff_model.updateFeature(feature)
 
-expression2 = QgsExpression("to_int(\"Secondary\" * \"POP06\")")
+expression2 = QgsExpression("to_int(Secondary * " + Population_Data + ")")
 expression2.prepare(huff_model.pendingFields())
-
 for feature in huff_model.getFeatures():
     value = expression2.evaluate(feature)
     feature[idx_sec_pop] = value
@@ -180,7 +183,7 @@ composerMap = QgsComposerMap(c, x, y, w, h)
 
 table = QgsComposerAttributeTable(c)
 table.setComposerMap(composerMap)
-table.setScale(.85)
+table.setScale(1)
 table.setVectorLayer(huff_model)
 table.setMaximumNumberOfFeatures(huff_model.featureCount())
 c.addItem(table)
@@ -189,6 +192,7 @@ c.addItem(table)
 if os.path.isfile(PDF_file):
     os.remove(PDF_file)
 
+# Set the properties of the PDF which will take and show the attribute table
 printer = QPrinter()
 printer.setOutputFormat(QPrinter.PdfFormat)
 printer.setOutputFileName(PDF_file)
